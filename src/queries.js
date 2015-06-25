@@ -303,9 +303,9 @@
             } else if (this.get('op') === orb.Q.Op.And) {
                 var new_queries = this.get('queries').slice(0);
                 new_queries.push(other);
-                return orb.QCompound({op: orb.Q.Op.And, queries: new_queries});
+                return new orb.QCompound({op: orb.Q.Op.And, queries: new_queries});
             } else {
-                return orb.QCompound({op: orb.Q.Op.And, queries: [this, other]});
+                return new orb.QCompound({op: orb.Q.Op.And, queries: [this, other]});
             }
         },
         copy: function () {

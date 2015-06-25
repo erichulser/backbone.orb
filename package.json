@@ -7,7 +7,7 @@
   },
   "scripts": {
     "watch": "watchify src/main.js -o lib/backbone.orb.js -dv",
-    "build": "browserify src/main.js | uglifyjs -mc > lib/backbone.orb.js"
+    "build": "browserify src/main.js | uglifyjs -mc > lib/backbone.orb.min.js"
   },
   "repository": {
     "type": "git",

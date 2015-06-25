@@ -1,0 +1,27 @@
+{
+  "name": "backbone.orb",
+  "description": "Frontend management for the ORB REST API's",
+  "main": "src/main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "watch": "watchify src/main.js -o lib/backbone.orb.js -dv",
+    "build": "browserify src/main.js | uglifyjs -mc > lib/backbone.orb.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/projexsoftware/backbone.orb"
+  },
+  "author": [
+    "Eric Hulser"
+  ],
+  "devDependencies": {
+    "browserify": "",
+    "uglify-js": "",
+    "watchify": "",
+    "grunt": "",
+    "grunt-cli": "",
+    "grunt-bowercopy": ""
+  }
+}

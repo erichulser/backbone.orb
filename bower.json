@@ -1,0 +1,39 @@
+{
+  "name": "backbone.orb",
+  "version": "0.0.0",
+  "homepage": "https://github.com/projexsoftware/backbone.orb",
+  "authors": [
+    "Eric Hulser"
+  ],
+  "description": "Frontend management for the ORB REST API's",
+  "main": "lib/backbone.orb.js",
+  "keywords": [
+    "backbone",
+    "plugin",
+    "computed",
+    "field",
+    "model"
+  ],
+  "dependencies": {
+    "backbone": ">=0.9.9 <=1.2.1",
+    "underscore": ">=1.3.3 <=1.8.3"
+  },
+  "devDependencies": {
+  },
+  "license": "LGPL",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "public",
+    "specs",
+    ".gitignore",
+    ".jshintrc",
+    ".travis.yml",
+    "Gruntfile.js",
+    "component.json",
+    "package.json"
+  ]
+}

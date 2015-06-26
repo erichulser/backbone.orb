@@ -99,6 +99,18 @@
             out.set('value', value);
             return out;
         },
+        greaterThan: function (value) {
+            var out = this.copy();
+            out.set('op', orb.Q.Op.GreaterThan);
+            out.set('value', value);
+            return out;
+        },
+        greaterThanOrEqual: function (value) {
+            var out = this.copy();
+            out.set('op', orb.Q.Op.GreaterThanOrEqual);
+            out.set('value', value);
+            return out;
+        },
         is: function (value) {
             var out = this.copy();
             out.set('op', orb.Q.Op.Is);
@@ -332,9 +344,9 @@
             } else if (this.get('op') === orb.Q.Op.Or) {
                 var new_queries = this.get('queries').slice(0);
                 new_queries.push(other);
-                return orb.QCompound({op: orb.Q.Op.Or, queries: new_queries});
+                return new orb.QCompound({op: orb.Q.Op.Or, queries: new_queries});
             } else {
-                return orb.QCompound({op: orb.Q.Op.Or, queries: [this, other]});
+                return new orb.QCompound({op: orb.Q.Op.Or, queries: [this, other]});
             }
         },
         toJSON: function () {

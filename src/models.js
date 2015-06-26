@@ -1,59 +1,74 @@
 (function (orb, $) {
-    orb.RecordSet = Backbone.Collection.extend({
-        initialize: function () {
-            this.lookup = {};
-        },
-        fetchCount: function (options) {
-            return this.fetch(_.extend({}, options, {data: {returning: 'count'}}));
-        },
-        fetch: function (options) {
-            var options = options || {};
-            var lookup = {};
-
-            // setup the where query
-            var where = undefined;
-            if (this.lookup.where) {
-                where = this.lookup.where.and(options.where);
-            } else if (options.where) {
-                where = options.where;
-            }
-            if (where && !where.isNull()) {
-                lookup.where = where.toJSON();
-            }
-
-            // setup the rest of the lookup options
-            if (options.limit || this.lookup.limit) {
-                lookup.limit = options.limit || this.lookup.limit;
-            }
-            if (options.order || this.lookup.order) {
-                lookup.order = options.limit || this.lookup
-            }
-            if (options.expand || this.lookup.expand) {
-                lookup.expand = options.expand || this.lookup.expand;
-            }
-
-            // if we have lookup specific options, update the root query
-            if (!_.isEmpty(lookup)) {
-                options.data = _.extend({lookup: JSON.stringify(lookup)}, options.data);
-            }
-
-            // call the base collection lookup commands
-            return Backbone.Collection.prototype.fetch.call(this, options);
-        }
-    });
-
     orb.Model = Backbone.Model.extend({
+        schema: undefined,
+        initialize: function (options) {
+            // setup defaults based on the schema
+            if (this.schema) {
+                var defaults = {};
+                _.each(this.schema.columns || [], function (column) {
+                    if (column.default !== undefined) {
+                        defaults[column.field] = column.default;
+                    }
+                });
+                options = _.extend(defaults, options);
+            }
+
+            // call the base class's method
+            Backbone.Model.prototype.initialize.call(this, options);
+        },
+        addCollection: function (name, model, options) {
+            options = options || {};
+            var self = this;
+            var records = model.select();
+            if (options.urlRoot) {
+                records.urlRoot = options.urlRoot;
+            } else {
+                records.urlRoot = function () {
+                    return s.rtrim(self.urlRoot, '/') + '/' + self.get('id') + '/' + (options.urlSuffix || name);
+                }
+            }
+            this[name] = records;
+            return records;
+        },
+        addReference: function (name, model, options) {
+            options = options || {};
+            var self = this;
+            var getter = options.getter || 'get' + name[0].toUpperCase() + name.slice(1);
+            var setter = options.setter || 'set' + name[0].toUpperCase() + name.slice(1);
+            var field = options.field || s.underscored(name) + '_id';
+            var propname = '__' + name;
+
+            // create the getter & setter methods
+            self[getter] = function () {
+                if (!self[propname]) {
+                    // initialize with loaded properties
+                    var props = self.get(name) || {id: self.get(field)};
+                    self[propname] = new model(props);
+                }
+                return self[propname];
+            };
+            self[setter] = function (record) {
+                self[propname] = record;
+                self.set(field, record.get('id'));
+            };
+        }
     }, {
         collection: orb.RecordSet,
         all: function (options) {
             return this.select(options);
         },
-        select: function (options) {
+        select: function (lookup) {
             var records = new this.collection();
-            records.lookup = _.extend({}, records.options, options);
-            records.url = this.prototype.urlRoot;
+            records.lookup = _.extend({}, records.lookup, lookup);
+            records.urlRoot = this.prototype.urlRoot;
             records.model = this;
             return records;
+        },
+        byId: function (id, options) {
+            options = options || {};
+            var q = new orb.Q('id').is(id);
+            options.where = q.and(options.where);
+            return this.select().fetchOne(options);
         }
     });
 })(window.orb);

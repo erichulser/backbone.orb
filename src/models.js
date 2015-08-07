@@ -41,9 +41,15 @@
             // create the getter & setter methods
             self[getter] = function () {
                 if (!self[propname]) {
-                    // initialize with loaded properties
-                    var props = self.get(name) || {id: self.get(field)};
-                    self[propname] = new model(props);
+                    if (options.reverseLookup) {
+                        var ref = new model();
+                        ref.urlRoot = this.url() + '/' + name;
+                        self[propname] = ref;
+                    } else {
+                        // initialize with loaded properties
+                        var props = self.get(name) || {id: self.get(field)};
+                        self[propname] = new model(props);
+                    }
                 }
                 return self[propname];
             };
@@ -51,6 +57,13 @@
                 self[propname] = record;
                 self.set(field, record.get('id'));
             };
+        },
+        url: function () {
+            if (this.collection) {
+                return this.collection.url() + '/' + this.get('id');
+            } else {
+                return Backbone.Model.prototype.url.call(this);
+            }
         }
     }, {
         collection: orb.RecordSet,

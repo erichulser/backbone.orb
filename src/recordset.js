@@ -3,6 +3,10 @@
         initialize: function () {
             this.lookup = {};
         },
+        create: function (properties, options) {
+            options.url = this.url();
+            Backbone.Collection.prototype.create.call(properties, options);
+        },
         copy: function () {
             var out = new this.constructor();
             out.urlRoot = this.urlRoot;

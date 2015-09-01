@@ -60,7 +60,12 @@
         },
         url: function () {
             if (this.collection) {
-                return this.collection.url() + '/' + this.get('id');
+                var id = this.get('id');
+                if (id) {
+                    return this.collection.url() + '/' + id;
+                } else {
+                    return this.collection.url();
+                }
             } else {
                 return Backbone.Model.prototype.url.call(this);
             }

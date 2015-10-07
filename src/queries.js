@@ -85,10 +85,26 @@
             out.set('caseSensitive', caseSensitive);
             return out;
         },
-        doesNotMatch: function (value, caseSensitive) {
-            var caseSensitive = (caseSensitive === undefined) ? true : caseSensitive;
+        doesNotEndwith: function (value, caseSensitive) {
+            caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
             var out = this.copy();
-            out.set('op', orb.Q.Op.Matches);
+            out.set('op', orb.Q.Op.DoesNotEndwith);
+            out.set('value', value);
+            out.set('caseSensitive', caseSensitive);
+            return out;
+        },
+        doesNotMatch: function (value, caseSensitive) {
+            var caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
+            var out = this.copy();
+            out.set('op', orb.Q.Op.DoesNotMatch);
+            out.set('value', value);
+            out.set('caseSensitive', caseSensitive);
+            return out;
+        },
+        doesNotStartwith: function (value, caseSensitive) {
+            caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
+            var out = this.copy();
+            out.set('op', orb.Q.Op.DoesNotStartwith);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
             return out;
@@ -230,7 +246,7 @@
             After: '>',
             Between: 'between',
             Contains: 'contains',
-            DoesNotContain: "doesn't match",
+            DoesNotContain: "doesn't contain",
             Startswith: 'startswith',
             Endswith: 'endswith',
             Matches: 'matches',

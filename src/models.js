@@ -13,6 +13,9 @@
                 options = _.extend(defaults, options);
             }
 
+            // store references as an object
+            this.references = {};
+
             // call the base class's method
             Backbone.Model.prototype.initialize.call(this, options);
         },
@@ -36,27 +39,29 @@
             var getter = options.getter || 'get' + name[0].toUpperCase() + name.slice(1);
             var setter = options.setter || 'set' + name[0].toUpperCase() + name.slice(1);
             var field = options.field || s.underscored(name) + '_id';
-            var propname = '__' + name;
 
             // create the getter & setter methods
             self[getter] = function () {
-                if (!self[propname]) {
+                if (!self.references[name]) {
                     if (options.reverseLookup) {
                         var ref = new model();
                         ref.urlRoot = this.url() + '/' + name;
-                        self[propname] = ref;
+                        self.references[name] = ref;
                     } else {
                         // initialize with loaded properties
                         var props = self.get(name) || {id: self.get(field)};
-                        self[propname] = new model(props);
+                        self.references[name] = new model(props);
                     }
                 }
-                return self[propname];
+                return self.references[name];
             };
             self[setter] = function (record) {
-                self[propname] = record;
-                self.set(field, record.get('id'));
+                self.references[name] = record;
+                self.set(field, record ? record.get('id') : null);
             };
+        },
+        clearReference: function (name) {
+            delete this.references[name];
         },
         url: function () {
             if (this.collection) {

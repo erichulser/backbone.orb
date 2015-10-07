@@ -11,27 +11,33 @@
             var out = new this.constructor();
             out.urlRoot = this.urlRoot;
             out.model = this.model;
-            out.lookup = _.extend({}, out.lookup);
+            out.lookup = _.extend({}, this.lookup);
 
             // create a copy of the where query
-            if (out.lookup.where) {
-                out.lookup.where = out.lookup.where.copy();
+            if (this.lookup.where !== undefined) {
+                out.lookup.where = this.lookup.where.copy();
             }
 
-            if (out.lookup.columns) {
-                out.lookup.columns = out.lookup.columns.slice(0);
+            if (this.lookup.columns !== undefined) {
+                out.lookup.columns = this.lookup.columns.slice(0);
             }
 
-            if (out.lookup.order && typeof(out.lookup.order) === 'object') {
-                out.lookup.order = out.lookup.order.slice(0);
+            if (this.lookup.order && typeof(this.lookup.order) === 'object') {
+                out.lookup.order = this.lookup.order.slice(0);
             }
             return out;
         },
         fetchCount: function (options) {
-            return this.fetch(_.extend({}, options, {data: {returning: 'count'}}));
+            var sub_select = this.copy();
+            if (options.data) {
+                options.data.returning = 'count';
+            } else {
+                options.data = {returning: 'count'};
+            }
+            return sub_select.fetch(options);
         },
         fetch: function (options) {
-            var options = options || {};
+            options = options || {};
             var lookup = {};
 
             // setup the where query
@@ -66,6 +72,7 @@
         },
         fetchOne: function (options) {
             options = options || {};
+            var new_collection = this.copy();
             var opts = _.extend({}, options, {
                 limit: 1,
                 success: function (collection, data) {
@@ -78,7 +85,7 @@
                     }
                 }
             });
-            return this.fetch(opts);
+            return new_collection.fetch(opts);
         },
         refine: function (lookup) {
             var out = this.copy();

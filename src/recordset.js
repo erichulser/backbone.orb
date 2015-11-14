@@ -4,8 +4,9 @@
             this.lookup = {};
         },
         create: function (properties, options) {
+            options = options || {};
             options.url = this.url();
-            Backbone.Collection.prototype.create.call(properties, options);
+            Backbone.Collection.prototype.create.call(this, properties, options);
         },
         copy: function () {
             var out = new this.constructor();

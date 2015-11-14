@@ -22,7 +22,9 @@
         addCollection: function (name, model, options) {
             options = options || {};
             var self = this;
-            var records = model.select();
+            var fetched = this.get(name);
+            var records = (_.isEmpty(fetched)) ? new model.collection() : new model.collection(_.map(fetched, function (attrs) { new model(attrs) }));
+            records.model = model;
             if (options.urlRoot) {
                 records.urlRoot = options.urlRoot;
             } else {
@@ -31,6 +33,7 @@
                 }
             }
             this[name] = records;
+
             return records;
         },
         addReference: function (name, model, options) {
@@ -49,7 +52,7 @@
                         self.references[name] = ref;
                     } else {
                         // initialize with loaded properties
-                        var props = self.get(name) || {id: self.get(field)};
+                        var props = _.extend({id: self.get(field)}, self.get(name));
                         self.references[name] = new model(props);
                     }
                 }

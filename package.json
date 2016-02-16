@@ -1,17 +1,17 @@
 {
-  "name": "backbone.orb",
-  "description": "Frontend management for the ORB REST API's",
-  "main": "src/main.js",
+  "name": "orb.js",
+  "description": "JavaScript layer for the ORB database framework",
+  "main": "src/all.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "watch": "watchify src/main.js -o lib/backbone.orb.js -dv",
-    "build": "browserify src/main.js | uglifyjs -mc > lib/backbone.orb.min.js"
+    "watch": "watchify src/all.js -o dist/orb.js -dv",
+    "build": "browserify src/all.js | uglifyjs -mc > dist/orb.min.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/projexsoftware/backbone.orb"
+    "url": "https://github.com/projexsoftware/orb.js"
   },
   "author": [
     "Eric Hulser"

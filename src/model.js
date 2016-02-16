@@ -1,7 +1,7 @@
 (function (orb, $) {
     orb.Model = Backbone.Model.extend({
-        schema: undefined,
         initialize: function (options) {
+            options = options || {};
             // setup defaults based on the schema
             if (this.schema) {
                 var defaults = {};
@@ -79,7 +79,8 @@
             }
         }
     }, {
-        collection: orb.RecordSet,
+        schema: undefined,
+        collection: orb.Collection,
         all: function (options) {
             return this.select(options);
         },

@@ -315,13 +315,11 @@
 
     orb.QCompound = Backbone.Model.extend({
         defaults: {
-            op: 'And',
-            queries: undefined
+            op: 'And'
         },
         initialize: function (options) {
-            if (this.get('queries') === undefined) {
-                this.set('queries', []);
-            }
+            options = options || {};
+            this.queries = options.queries || new orb.Collection();
         },
         and: function (other) {
             if (other === undefined || other.isNull()) {
@@ -329,23 +327,23 @@
             } else if (this.isNull()) {
                 return other;
             } else if (this.get('op') === orb.Q.Op.And) {
-                var new_queries = this.get('queries').slice(0);
+                var new_queries = this.queries.slice(0);
                 new_queries.push(other);
                 return new orb.QCompound({op: orb.Q.Op.And, queries: new_queries});
             } else {
-                return new orb.QCompound({op: orb.Q.Op.And, queries: [this, other]});
+                return new orb.QCompound({op: orb.Q.Op.And, queries: new Backbone.Collection([this, other])});
             }
         },
         copy: function () {
             var options = {
                 op: this.get('op'),
-                queries: this.get('queries').slice(0)
+                queries: this.queries.slice(0)
             };
             return new orb.QCompound(options);
         },
         isNull: function () {
             var am_null = true;
-            _.each(this.get('queries'), function (subquery) {
+            _.each(this.queries, function (subquery) {
                 if (!subquery.isNull()) {
                     am_null = false;
                 }
@@ -358,7 +356,7 @@
             } else if (this.isNull()) {
                 return other;
             } else if (this.get('op') === orb.Q.Op.Or) {
-                var new_queries = this.get('queries').slice(0);
+                var new_queries = this.queries.slice(0);
                 new_queries.push(other);
                 return new orb.QCompound({op: orb.Q.Op.Or, queries: new_queries});
             } else {
@@ -366,15 +364,10 @@
             }
         },
         toJSON: function () {
-            var query_json = [];
-            _.each(this.get('queries'), function (query) {
-                query_json.push(query.toJSON());
-            });
-
             return {
                 type: 'compound',
                 op: orb.Q.Op.key(this.get('op')),
-                queries: query_json
+                queries: this.queries.toJSON()
             };
         }
     });

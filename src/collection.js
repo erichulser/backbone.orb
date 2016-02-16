@@ -1,5 +1,5 @@
 (function (orb, $) {
-    orb.RecordSet = Backbone.Collection.extend({
+    orb.Collection = Backbone.Collection.extend({
         initialize: function () {
             this.lookup = {};
         },

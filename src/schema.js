@@ -44,14 +44,15 @@
 
     orb.Column = Backbone.Model.extend({
         defaults: {
+            type: '',
             name: '',
             field: '',
             display: '',
+            reference: undefined,
             index: undefined,
             flags: 0,
             default: undefined,
-            defaultOrder: 'asc',
-            type: ''
+            defaultOrder: 'asc'
         },
         testFlag: function (flag) {
             return (self.get('flags') & flag) > 0;

@@ -1,70 +1,191 @@
 (function (orb, $) {
     orb.Model = Backbone.Model.extend({
         initialize: function (options) {
+            var self = this;
             options = options || {};
-            // setup defaults based on the schema
-            if (this.schema) {
-                var defaults = {};
-                _.each(this.schema.columns || [], function (column) {
-                    if (column.default !== undefined) {
-                        defaults[column.field] = column.default;
+
+            // initialize information from the schema
+            self.references = {};
+
+            // create the reference information
+            var schema = self.constructor.schema;
+            if (schema) {
+                _.forEach(schema.columns, function (column) {
+                    if (column.type === 'Reference') {
+                        self.references[column.name] = undefined;
                     }
                 });
-                options = _.extend(defaults, options);
-            }
 
-            // store references as an object
-            this.references = {};
+                _.forEach(schema.collectors, function (collector) {
+                    if (collector.flags.Unique) {
+                        self.references[collector.name] = undefined;
+                    } else {
+                        var model = schema.referenceScope[collector.model];
+                        var records = new  model.collection();
+                        records.urlRoot = function () {
+                            var root = self.urlRoot;
+                            var record_id = self.get('id');
+                            if (!(root && record_id)) {
+                                return undefined;
+                            } else {
+                                var trimmed = s.trim(self.urlRoot, '/');
+                                return trimmed + '/' + record_id;
+                            }
+                        };
+                        self[collector.name] = records;
+                    }
+                });
+            }
 
             // call the base class's method
             Backbone.Model.prototype.initialize.call(this, options);
         },
-        addCollection: function (name, model, options) {
-            options = options || {};
+        get: function (attribute) {
             var self = this;
-            var fetched = this.get(name);
-            var records = (_.isEmpty(fetched)) ? new model.collection() : new model.collection(_.map(fetched, function (attrs) { new model(attrs) }));
-            records.model = model;
-            if (options.urlRoot) {
-                records.urlRoot = options.urlRoot;
-            } else {
-                records.urlRoot = function () {
-                    return s.rtrim(self.urlRoot, '/') + '/' + self.get('id') + '/' + (options.urlSuffix || name);
+            var schema = this.constructor.schema;
+            if (schema) {
+                var collector = schema.collectors[attribute];
+                var column = undefined;
+                _.forEach(schema.columns, function (col) {
+                    if (col.type === 'Reference' && col.name === attribute) {
+                        column = col;
+                    }
+                });
+
+                // get a reference column
+                if (column && column.type === 'Reference') {
+                    var record = this.references[attribute];
+                    if (record === undefined) {
+                        record = new schema.referenceScope[column.reference]({id: self.attributes[column.field]});
+                        this.references[column.name] = record;
+                    }
+                    return record;
                 }
-            }
-            this[name] = records;
 
-            return records;
-        },
-        addReference: function (name, model, options) {
-            options = options || {};
-            var self = this;
-            var getter = options.getter || 'get' + name[0].toUpperCase() + name.slice(1);
-            var setter = options.setter || 'set' + name[0].toUpperCase() + name.slice(1);
-            var field = options.field || s.underscored(name) + '_id';
-
-            // create the getter & setter methods
-            self[getter] = function () {
-                if (!self.references[name]) {
-                    if (options.reverseLookup) {
-                        var ref = new model();
-                        ref.urlRoot = this.url() + '/' + name;
-                        self.references[name] = ref;
+                // get a collection of objects
+                else if (collector) {
+                    if (collector.flags.Unique) {
+                        var record = this.references[attribute];
+                        if (record === undefined) {
+                            record = new schema.referenceScope[collector.model]();
+                            record.urlRoot = this.url() + '/' + name;
+                            this.references[attribute] = record;
+                        }
+                        return record;
                     } else {
-                        // initialize with loaded properties
-                        var props = _.extend({id: self.get(field)}, self.get(name));
-                        self.references[name] = new model(props);
+                        return this[attribute];
                     }
                 }
-                return self.references[name];
-            };
-            self[setter] = function (record) {
-                self.references[name] = record;
-                self.set(field, record ? record.get('id') : null);
-            };
+
+                // get a regular attribute
+                else {
+                    return Backbone.Model.prototype.get.call(this, attribute);
+                }
+            }
+
+            // get a regular attribute
+            else {
+                return Backbone.Model.prototype.get.call(this, attribute);
+            }
         },
-        clearReference: function (name) {
-            delete this.references[name];
+        parse: function (response, options) {
+            var self = this;
+            var schema = self.constructor.schema;
+
+            if (schema) {
+                // load references
+                _.forEach(schema.columns, function (column) {
+                    if (column.type === 'Reference') {
+                        var data = response[column.name];
+                        delete response[column.name];
+                        if (data !== undefined) {
+                            if (!self.references[column.name]) {
+                                self.references[column.name] = new schema.referenceScope[column.reference](data);
+                            } else {
+                                self.references[column.name].update(data);
+                            }
+                        }
+                    }
+                });
+
+                // load collectors
+                _.forEach(schema.collectors, function (collector) {
+                    var data = response[collector.name];
+                    delete response[collector.name];
+                    if (data) {
+                        if (collector.flags.Unique) {
+                            if (!self.references[collector.name]) {
+                                self.references[collector.name] = new schema.referenceScope[collector.model](data);
+                            } else {
+                                self.references[collctor.name].update(data);
+                            }
+                        } else {
+                            var records = undefined;
+                            if (data instanceof Array) {
+                                records = data;
+                            } else {
+                                records = data.records;
+                            }
+
+                            if (records !== undefined) {
+                                self[collector.name].set(records);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // process the base call
+            return Backbone.Model.prototype.parse.call(this, response, options);
+        },
+        set: function (attributes, options) {
+            var self = this;
+            _.forEach(attributes, function (value, attribute) {
+                // set reference information
+                if (_.hasOwnProperty(self.references, attribute)) {
+                    delete attributes[attribute];
+
+                    if (value instanceof orb.Model) {
+                        self.references[attribute] = value;
+                    } else {
+                        var ref = self.get(attribute);
+                        ref.update(value);
+                    }
+                }
+
+                // set collection information
+                else if (_.hasOwnProperty(self, attribute)) {
+                    delete attributes[attribute];
+                    if (value instanceof orb.Collection) {
+                        self[attribute] = value;
+                    } else {
+                        self[attribute].set(value);
+                    }
+                }
+            });
+
+            return Backbone.Model.prototype.set.call(this, attributes, options);
+        },
+        unset: function (attribute, options) {
+            // unset a reference object
+            if (this.references[name] !== undefined) {
+                options = options || {};
+                var data = this.references[name]
+                delete data;
+                if (!options.silent) {
+                    this.trigger('change:' + name, data);
+                }
+            }
+
+            // unset a collection
+            else if (this[attribute] !== undefined) {
+                this[attribute].reset();
+            }
+
+            // unset an attribute
+            else {
+                Backbone.Model.prototype.unset.call(this, attribute, options);
+            }
         },
         url: function () {
             if (this.collection) {
@@ -84,9 +205,9 @@
         all: function (options) {
             return this.select(options);
         },
-        select: function (lookup) {
+        select: function (context) {
             var records = new this.collection();
-            records.lookup = _.extend({}, records.lookup, lookup);
+            records.context = _.extend({}, records.context, context);
             records.urlRoot = this.prototype.urlRoot;
             records.model = this;
             return records;

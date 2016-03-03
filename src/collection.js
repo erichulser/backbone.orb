@@ -1,7 +1,7 @@
 (function (orb, $) {
     orb.Collection = Backbone.Collection.extend({
         initialize: function () {
-            this.lookup = {};
+            this.context = {};
         },
         create: function (properties, options) {
             options = options || {};
@@ -12,19 +12,19 @@
             var out = new this.constructor();
             out.urlRoot = this.urlRoot;
             out.model = this.model;
-            out.lookup = _.extend({}, this.lookup);
+            out.context = _.extend({}, this.context);
 
             // create a copy of the where query
-            if (this.lookup.where !== undefined) {
-                out.lookup.where = this.lookup.where.copy();
+            if (this.context.where !== undefined) {
+                out.context.where = this.context.where.copy();
             }
 
-            if (this.lookup.columns !== undefined) {
-                out.lookup.columns = this.lookup.columns.slice(0);
+            if (this.context.columns !== undefined) {
+                out.context.columns = this.context.columns.slice(0);
             }
 
-            if (this.lookup.order && typeof(this.lookup.order) === 'object') {
-                out.lookup.order = this.lookup.order.slice(0);
+            if (this.context.order && typeof(this.context.order) === 'object') {
+                out.context.order = this.context.order.slice(0);
             }
             return out;
         },
@@ -39,36 +39,36 @@
         },
         fetch: function (options) {
             options = options || {};
-            var lookup = {};
+            var context = {};
 
             // setup the where query
             var where = undefined;
-            if (this.lookup.where) {
-                where = this.lookup.where.and(options.where);
+            if (this.context.where) {
+                where = this.context.where.and(options.where);
             } else if (options.where) {
                 where = options.where;
             }
             if (where && !where.isNull()) {
-                lookup.where = where.toJSON();
+                context.where = where.toJSON();
             }
 
-            // setup the rest of the lookup options
-            if (options.limit || this.lookup.limit) {
-                lookup.limit = options.limit || this.lookup.limit;
+            // setup the rest of the context options
+            if (options.limit || this.context.limit) {
+                context.limit = options.limit || this.context.limit;
             }
-            if (options.order || this.lookup.order) {
-                lookup.order = options.order || this.lookup.order;
+            if (options.order || this.context.order) {
+                context.order = options.order || this.context.order;
             }
-            if (options.expand || this.lookup.expand) {
-                lookup.expand = options.expand || this.lookup.expand;
-            }
-
-            // if we have lookup specific options, update the root query
-            if (!_.isEmpty(lookup)) {
-                options.data = _.extend({lookup: JSON.stringify(lookup)}, options.data);
+            if (options.expand || this.context.expand) {
+                context.expand = options.expand || this.context.expand;
             }
 
-            // call the base collection lookup commands
+            // if we have context specific options, update the root query
+            if (!_.isEmpty(context)) {
+                options.data = _.extend({context: JSON.stringify(context)}, options.data);
+            }
+
+            // call the base collection context commands
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
         fetchOne: function (options) {
@@ -88,28 +88,28 @@
             });
             return new_collection.fetch(opts);
         },
-        refine: function (lookup) {
+        refine: function (context) {
             var out = this.copy();
 
-            // merge the where lookups
-            if (out.lookup.where) {
-                out.lookup.where = out.lookup.where.and(lookup.where);
-            } else if (lookup.where) {
-                out.lookup.where = lookup.where;
+            // merge the where contexts
+            if (out.context.where) {
+                out.context.where = out.context.where.and(context.where);
+            } else if (context.where) {
+                out.context.where = context.where;
             }
 
             // remove the where option
-            delete lookup.where;
+            delete context.where;
 
             // replace the other options
-            out.lookup = _.extend(out.lookup, lookup)
+            out.context = _.extend(out.context, context)
 
             return out;
         },
         url: function () {
             var url = (typeof(this.urlRoot) === 'string') ? this.urlRoot : this.urlRoot();
-            if (this.lookup.view) {
-                return s.rtrim(url, '/') + '/' + this.lookup.view;
+            if (this.context.view) {
+                return s.rtrim(url, '/') + '/' + this.context.view;
             } else {
                 return url;
             }

@@ -10,13 +10,13 @@ window.orb = {
             processData: false,
             contentType: 'application/json',
             success: function (schemas) {
-                _.forEach(schemas, function (schema) {
+                _.each(schemas, function (schema) {
                     var defaults = {};
 
                     schema.referenceScope = scope;
 
                     // create the default values
-                    _.forEach(schema.columns, function (column, field) {
+                    _.each(schema.columns, function (column, field) {
                         if (column.type !== 'Id') {
                             defaults[field] = column['default'];
                         }
@@ -39,8 +39,8 @@ window.orb = {
     }
 };
 
+require('./context');
 require('./schema');
 require('./collection');
 require('./model');
 require('./queries');
-require('./ui/all');

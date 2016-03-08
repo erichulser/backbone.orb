@@ -10,13 +10,13 @@
             // create the reference information
             var schema = self.constructor.schema;
             if (schema) {
-                _.forEach(schema.columns, function (column) {
+                _.each(schema.columns, function (column) {
                     if (column.type === 'Reference') {
                         self.references[column.name] = undefined;
                     }
                 });
 
-                _.forEach(schema.collectors, function (collector) {
+                _.each(schema.collectors, function (collector) {
                     if (collector.flags.Unique) {
                         self.references[collector.name] = undefined;
                     } else {
@@ -46,7 +46,7 @@
             if (schema) {
                 var collector = schema.collectors[attribute];
                 var column = undefined;
-                _.forEach(schema.columns, function (col) {
+                _.each(schema.columns, function (col) {
                     if (col.type === 'Reference' && col.name === attribute) {
                         column = col;
                     }
@@ -94,7 +94,7 @@
 
             if (schema) {
                 // load references
-                _.forEach(schema.columns, function (column) {
+                _.each(schema.columns, function (column) {
                     if (column.type === 'Reference') {
                         var data = response[column.name];
                         delete response[column.name];
@@ -109,7 +109,7 @@
                 });
 
                 // load collectors
-                _.forEach(schema.collectors, function (collector) {
+                _.each(schema.collectors, function (collector) {
                     var data = response[collector.name];
                     delete response[collector.name];
                     if (data) {
@@ -140,7 +140,7 @@
         },
         set: function (attributes, options) {
             var self = this;
-            _.forEach(attributes, function (value, attribute) {
+            _.each(attributes, function (value, attribute) {
                 // set reference information
                 if (_.hasOwnProperty(self.references, attribute)) {
                     delete attributes[attribute];
@@ -206,17 +206,16 @@
             return this.select(options);
         },
         select: function (context) {
-            var records = new this.collection();
-            records.context = _.extend({}, records.context, context);
+            var records = new this.collection(context);
             records.urlRoot = this.prototype.urlRoot;
             records.model = this;
             return records;
         },
-        byId: function (id, options) {
-            options = options || {};
+        byId: function (id, context) {
+            context = context || {};
             var q = new orb.Q('id').is(id);
-            options.where = q.and(options.where);
-            return this.select().fetchOne(options);
+            context.where = q.and(context.where);
+            return this.select().fetchOne(context);
         }
     });
 })(window.orb);

@@ -315,7 +315,7 @@
 
     orb.QCompound = Backbone.Model.extend({
         defaults: {
-            op: 'And'
+            op: 'and'
         },
         initialize: function (options) {
             options = options || {};
@@ -343,7 +343,7 @@
         },
         isNull: function () {
             var am_null = true;
-            _.each(this.queries, function (subquery) {
+            this.queries.each(function (subquery) {
                 if (!subquery.isNull()) {
                     am_null = false;
                 }

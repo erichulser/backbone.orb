@@ -1,7 +1,8 @@
 (function (orb, $) {
     orb.Collection = Backbone.Collection.extend({
-        initialize: function () {
-            this.context = {};
+        initialize: function (context) {
+            context = context || {};
+            this.context = new orb.Context(context);
         },
         create: function (properties, options) {
             options = options || {};
@@ -39,33 +40,12 @@
         },
         fetch: function (options) {
             options = options || {};
-            var context = {};
-
-            // setup the where query
-            var where = undefined;
-            if (this.context.where) {
-                where = this.context.where.and(options.where);
-            } else if (options.where) {
-                where = options.where;
-            }
-            if (where && !where.isNull()) {
-                context.where = where.toJSON();
-            }
-
-            // setup the rest of the context options
-            if (options.limit || this.context.limit) {
-                context.limit = options.limit || this.context.limit;
-            }
-            if (options.order || this.context.order) {
-                context.order = options.order || this.context.order;
-            }
-            if (options.expand || this.context.expand) {
-                context.expand = options.expand || this.context.expand;
-            }
+            var context = new orb.Context(_.clone(this.context.attributes));
+            context.merge(options);
 
             // if we have context specific options, update the root query
             if (!_.isEmpty(context)) {
-                options.data = _.extend({context: JSON.stringify(context)}, options.data);
+                options.data = _.extend({}, options.data, {context: JSON.stringify(context.toJSON())});
             }
 
             // call the base collection context commands
@@ -90,26 +70,14 @@
         },
         refine: function (context) {
             var out = this.copy();
-
-            // merge the where contexts
-            if (out.context.where) {
-                out.context.where = out.context.where.and(context.where);
-            } else if (context.where) {
-                out.context.where = context.where;
-            }
-
-            // remove the where option
-            delete context.where;
-
-            // replace the other options
-            out.context = _.extend(out.context, context)
-
+            out.context.merge(this.context.attributes);
+            out.context.merge(context);
             return out;
         },
         url: function () {
             var url = (typeof(this.urlRoot) === 'string') ? this.urlRoot : this.urlRoot();
-            if (this.context.view) {
-                return s.rtrim(url, '/') + '/' + this.context.view;
+            if (this.context.get('view')) {
+                return s.rtrim(url, '/') + '/' + this.context.get('view');
             } else {
                 return url;
             }

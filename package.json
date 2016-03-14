@@ -1,27 +1,38 @@
 {
   "name": "orb.js",
-  "description": "JavaScript layer for the ORB database framework",
+  "description": "Backbone layer for the ORB database framework",
+  "homepage": "https://github.com/orb-framework/orb.js",
+  "version": "0.0.0",
   "main": "src/all.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "watch": "watchify src/all.js -o dist/orb.js -dv",
-    "build": "browserify src/all.js | uglifyjs -mc > dist/orb.min.js"
+  "license": "LGPL",
+  "author": {
+    "name": "Eric Hulser",
+    "email": "eric.hulser@projexsoftware.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/orb-framework/orb.js"
+    "url": "https://github.com/orb-framework/orb.js.git"
   },
-  "author": [
-    "Eric Hulser"
-  ],
+  "github": "https://github.com/orb-framework/orb.js",
+  "scripts": {
+    "watch": "watchify src/all.js -o dist/orb.js -dv",
+    "build": "browserify src/all.js > dist/orb.js",
+    "bdist": "browserify src/all.js | uglifyjs -mc > dist/orb.min.js",
+    "deploy": "npm run bdist && npm run build && npm run version:patch && npm run push:git && npm publish",
+    "version:patch": "mversion patch -m \"Release v%s\"",
+    "push:git": "git push --tags origin HEAD:master"
+  },
   "devDependencies": {
     "browserify": "",
-    "uglify-js": "",
-    "watchify": "",
+    "express": "^4.13.0",
     "grunt": "",
     "grunt-cli": "",
-    "grunt-bowercopy": ""
+    "grunt-bowercopy": "",
+    "mversion": "",
+    "uglify-js": "",
+    "watchify": ""
+  },
+  "directories": {
+    "test": "tests"
   }
 }

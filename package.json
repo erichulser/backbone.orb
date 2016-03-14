@@ -2,7 +2,7 @@
   "name": "orb.js",
   "description": "Backbone layer for the ORB database framework",
   "homepage": "https://github.com/orb-framework/orb.js",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "main": "src/all.js",
   "license": "LGPL",
   "author": {

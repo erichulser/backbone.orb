@@ -14,7 +14,7 @@
   "license": "LGPL",
   "author": {
     "name": "Eric Hulser",
-    "email": "eric.hulser@projexsoftware.com",
+    "email": "eric.hulser@projexsoftware.com"
   },
   "ignore": [
     "**/.*",

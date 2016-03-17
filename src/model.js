@@ -92,7 +92,7 @@
             var self = this;
             var schema = self.constructor.schema;
 
-            if (schema) {
+            if (schema && response) {
                 // load references
                 _.each(schema.columns, function (column) {
                     if (column.type === 'Reference') {

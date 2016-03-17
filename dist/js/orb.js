@@ -3,7 +3,7 @@ window.orb = {
     ready: function (api_root, options) {
         options = options || {};
         var scope = options.scope || {};
-        $.getJSON({
+        $.ajax({
             url: api_root + '?returning=schema',
             type: 'GET',
             dataType: 'json',
@@ -45,6 +45,7 @@ require('./schema');
 require('./collection');
 require('./model');
 require('./queries');
+
 },{"./collection":2,"./context":3,"./model":4,"./queries":5,"./schema":6}],2:[function(require,module,exports){
 (function (orb, $) {
     orb.Collection = Backbone.Collection.extend({
@@ -310,7 +311,7 @@ require('./queries');
             var self = this;
             var schema = self.constructor.schema;
 
-            if (schema) {
+            if (schema && response) {
                 // load references
                 _.each(schema.columns, function (column) {
                     if (column.type === 'Reference') {
@@ -437,6 +438,7 @@ require('./queries');
         }
     });
 })(window.orb);
+
 },{}],5:[function(require,module,exports){
 (function (orb) {
     // define the base query type

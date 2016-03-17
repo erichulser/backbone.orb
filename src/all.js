@@ -2,7 +2,7 @@ window.orb = {
     ready: function (api_root, options) {
         options = options || {};
         var scope = options.scope || {};
-        $.getJSON({
+        $.ajax({
             url: api_root + '?returning=schema',
             type: 'GET',
             dataType: 'json',

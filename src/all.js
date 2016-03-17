@@ -2,39 +2,55 @@ window.orb = {
     ready: function (api_root, options) {
         options = options || {};
         var scope = options.scope || {};
-        $.getJSON({
-            url: api_root + '?returning=schema',
-            type: 'GET',
-            dataType: 'json',
-            crossDomain: true,
-            processData: false,
-            contentType: 'application/json',
-            success: function (schemas) {
-                _.each(schemas, function (schema) {
-                    var defaults = {};
+        var resp;
+        var url = api_root + '?returning=schema';
 
-                    schema.referenceScope = scope;
+        // support CORS definitions
+        if (options.crossDomain) {
+            resp = $.getJSON({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                contentType: 'application/json',
+                crossDomain: true,
+                processData: false,
+                error: options.error
+            });
+        }
 
-                    // create the default values
-                    _.each(schema.columns, function (column, field) {
-                        if (column.type !== 'Id') {
-                            defaults[field] = column['default'];
-                        }
-                    });
+        // use from local API
+        else {
+            resp = $.get(url, {
+                contentType: 'application/json',
+                error: options.error
+            });
+        }
 
-                    // create the model
-                    scope[schema.model] = orb.Model.extend({
-                        urlRoot: schema.urlRoot,
-                        defaults: defaults
-                    }, {schema: schema});
+        resp.success(function (schemas) {
+            console.log('here!');
+            _.each(schemas, function (schema) {
+                var defaults = {};
+
+                schema.referenceScope = scope;
+
+                // create the default values
+                _.each(schema.columns, function (column, field) {
+                    if (column.type !== 'Id') {
+                        defaults[field] = column['default'];
+                    }
                 });
 
-                // notify the system on success
-                if (options.success !== undefined) {
-                    options.success(scope);
-                }
-            },
-            error: options.error
+                // create the model
+                scope[schema.model] = orb.Model.extend({
+                    urlRoot: schema.urlRoot,
+                    defaults: defaults
+                }, {schema: schema});
+            });
+
+            // notify the system on success
+            if (options.success !== undefined) {
+                options.success(scope);
+            }
         });
     }
 };

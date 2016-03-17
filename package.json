@@ -15,9 +15,9 @@
   },
   "github": "https://github.com/orb-framework/orb.js",
   "scripts": {
-    "watch": "watchify src/all.js -o dist/orb.js -dv",
-    "build": "browserify src/all.js > dist/orb.js",
-    "bdist": "browserify src/all.js | uglifyjs -mc > dist/orb.min.js",
+    "watch": "watchify src/all.js -o dist/js/orb.js -dv",
+    "build": "browserify src/all.js > dist/js/orb.js",
+    "bdist": "browserify src/all.js | uglifyjs -mc > dist/js/orb.min.js",
     "deploy": "npm run bdist && npm run build && npm run version:patch && npm run push:git && npm publish",
     "version:patch": "mversion patch -m \"Release v%s\"",
     "push:git": "git push --tags origin HEAD:master"

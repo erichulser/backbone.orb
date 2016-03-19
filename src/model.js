@@ -21,7 +21,7 @@
                         self.references[collector.name] = undefined;
                     } else {
                         var model = schema.referenceScope[collector.model];
-                        var records = new  model.collection();
+                        var records = new model.collection();
                         records.urlRoot = function () {
                             var root = self.urlRoot;
                             var record_id = self.get('id');
@@ -29,7 +29,7 @@
                                 return undefined;
                             } else {
                                 var trimmed = s.trim(self.urlRoot, '/');
-                                return trimmed + '/' + record_id;
+                                return [trimmed, record_id, collector.name].join('/');
                             }
                         };
                         self[collector.name] = records;

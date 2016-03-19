@@ -27,7 +27,6 @@ window.orb = {
         }
 
         resp.success(function (schemas) {
-            console.log('here!');
             _.each(schemas, function (schema) {
                 var defaults = {};
 

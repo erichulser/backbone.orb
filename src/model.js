@@ -2,40 +2,59 @@
     orb.Model = Backbone.Model.extend({
         initialize: function (options) {
             var self = this;
-            options = options || {};
 
             // initialize information from the schema
-            self.references = {};
+            if (!self._initialized) {
+                self._initialized = true;
+                self.references = {};
+                options = options || {};
 
-            // create the reference information
-            var schema = self.constructor.schema;
-            if (schema) {
-                _.each(schema.columns, function (column) {
-                    if (column.type === 'Reference') {
-                        self.references[column.name] = undefined;
-                    }
-                });
+                // create the reference information
+                var schema = self.constructor.schema;
+                if (schema) {
+                    _.each(schema.columns, function (column) {
+                        if (column.type === 'Reference') {
+                            self.references[column.name] = undefined;
+                        }
+                    });
 
-                _.each(schema.collectors, function (collector) {
-                    if (collector.flags.Unique) {
-                        self.references[collector.name] = undefined;
-                    } else {
-                        var model = schema.referenceScope[collector.model];
-                        var records = new model.collection();
-                        records.urlRoot = function () {
-                            var root = self.urlRoot;
-                            var record_id = self.get('id');
-                            if (!(root && record_id)) {
-                                return undefined;
+                    _.each(schema.collectors, function (collector) {
+                        if (!collector.flags.Static) {
+                            if (collector.flags.Unique) {
+                                self.references[collector.name] = undefined;
                             } else {
-                                var trimmed = s.trim(self.urlRoot, '/');
-                                return [trimmed, record_id, collector.name].join('/');
+                                var model = schema.referenceScope[collector.model];
+                                var records;
+
+                                // use default model
+                                if (model) {
+                                    records = new model.collection();
+                                } else {
+                                    if (collector.model) {
+                                        console.log('[ORB Error] Could not find model: ' + collector.model);
+                                    }
+
+                                    records = new Backbone.Collection();
+                                }
+
+                                records.url = function () {
+                                    var root = self.urlRoot;
+                                    var record_id = self.get('id');
+                                    if (!(root && record_id)) {
+                                        return undefined;
+                                    } else {
+                                        var trimmed = s.trim(self.urlRoot, '/');
+                                        return [trimmed, record_id, collector.name].join('/');
+                                    }
+                                };
+
+                                self[collector.name] = records;
                             }
-                        };
-                        self[collector.name] = records;
-                    }
-                });
+                        }
+                    });
+                }
             }
+
 
             // call the base class's method
             Backbone.Model.prototype.initialize.call(this, options);
@@ -89,6 +108,10 @@
             }
         },
         parse: function (response, options) {
+            if (this.references === undefined) {
+                this.initialize();
+            }
+
             var self = this;
             var schema = self.constructor.schema;
 
@@ -190,7 +213,7 @@
         url: function () {
             if (this.collection) {
                 var id = this.get('id');
-                if (id) {
+                if (id !== undefined) {
                     return this.collection.url() + '/' + id;
                 } else {
                     return this.collection.url();

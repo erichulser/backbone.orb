@@ -79,22 +79,6 @@
                 index: index_json
             };
         }
-    }, {
-        Flags: {
-            ReadOnly:       Math.pow(2, 0),
-            Private:        Math.pow(2, 1),
-            Polymorphic:    Math.pow(2, 2),
-            Primary:        Math.pow(2, 3),
-            Autoincrement:  Math.pow(2, 4),
-            Required:       Math.pow(2, 5),
-            Unique:         Math.pow(2, 6),
-            Encrypted:      Math.pow(2, 7),
-            Searchable:     Math.pow(2, 8),
-            Translatable:   Math.pow(2, 9),
-            CaseSensitive:  Math.pow(2, 10),
-            Virtual:        Math.pow(2, 11),
-            Queryable:      Math.pow(2, 12)
-        }
     });
 
     orb.Schema = Backbone.Model.extend({
@@ -134,5 +118,70 @@
                 pipes: this.pipes.toJSON()
             };
         }
+    }, {
+        generateModel: function (options) {
+            options = options || {};
+            var schema = options.schema;
+            var scope = options.scope || {};
+            var defaults = {};
+
+            schema.referenceScope = scope;
+
+            var cls_methods = {schema: schema};
+
+            // create the default values
+            _.each(schema.columns, function (column, field) {
+                if (column.type !== 'Id') {
+                    defaults[field] = column['default'];
+                }
+            });
+
+            // load collectors
+            _.each(schema.collectors, function (collector) {
+                if (collector.flags.Static) {
+                    cls_methods[collector.name] = function (context) {
+                        var records;
+                        if (collector.model) {
+                            records = new scope[collector.model].collection();
+                        } else {
+                            records = new Backbone.Collection();
+                        }
+                        records.url = schema.urlRoot + '/' + collector.name;
+                        return records;
+                    };
+                }
+            });
+
+            // load indexes
+            _.each(schema.indexes, function (index) {
+                cls_methods[index.name] = function () {
+                    var vargs = arguments;
+                    if ((arguments.length - 1) !== _.size(index.columns)) {
+                        throw ('Invalid number of arguments to ' + schema.model + '.' + index.name);
+                    }
+
+                    // create the index query
+                    var q = new orb.Q();
+                    _.each(index.columns, function (column, i) {
+                        q = q.and(new orb.Q(column).is(vargs[i]))
+                    });
+
+                    var records = scope[schema.model].select({where: q});
+                    var options = vargs[vargs.length - 1];
+                    var request;
+                    if (index.flags.Unique) {
+                        request = records.fetchOne(options);
+                    } else {
+                        request = records.fetch(options);
+                    }
+                    return request;
+                };
+            });
+
+            return orb.Model.extend({
+                urlRoot: schema.urlRoot,
+                defaults: defaults
+            }, cls_methods);
+        },
     });
 })(window.orb, jQuery);

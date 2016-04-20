@@ -42,7 +42,7 @@
                     if (expand) {
                         expand.extend(value);
                     } else {
-                        this.set('expand', value);
+                        self.set('expand', value);
                     }
                 }
                 else {
@@ -53,18 +53,19 @@
         set: function (key, value) {
             var data;
             if (!_.isObject(key)) {
-                data = {key: value};
+                data = {};
+                data[key] = value;
             } else {
                 data = key;
             }
 
             var values = {};
             _.each(data, function (v, k) {
-                if (k === 'expand' && v instanceof string) {
+                if (k === 'expand' && typeof v === 'string') {
                     v = v.split(',');
                 }
 
-                if (_.hasOwnProperty(k, Defaults)) {
+                if (_.keys(Defaults).indexOf(k) !== -1) {
                     values[k] = v;
                 }
             });

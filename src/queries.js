@@ -319,7 +319,7 @@
         },
         initialize: function (options) {
             options = options || {};
-            this.queries = options.queries || new orb.Collection();
+            this.queries = new orb.Collection(options.queries);
         },
         and: function (other) {
             if (other === undefined || other.isNull()) {

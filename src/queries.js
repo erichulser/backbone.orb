@@ -23,13 +23,13 @@
             }
         },
         after: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.After);
             out.set('value', value);
             return out;
         },
         abs: function () {
-            var out = this.copy();
+            var out = this.clone();
             out.modify(this.Function.Abs);
             return out;
         },
@@ -46,40 +46,39 @@
             }
         },
         asString: function () {
-            var out = this.copy();
+            var out = this.clone();
             out.modify(orb.Q.Op.AsString);
             return out;
         },
         before: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Before);
             out.set('value', value);
             return out;
         },
         between: function (a, b) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Between);
             out.set('value', [a, b]);
             return out;
         },
         contains: function (value, caseSensitive) {
             var caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Contains);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
             return out;
         },
-        copy: function () {
+        clone: function () {
             var attrs = _.extend({}, this.attributes);
             attrs['functions'] = attrs['functions'].slice(0);
             attrs['math'] = attrs['math'].slice(0);
             return new orb.Q(attrs);
-
         },
         doesNotContain: function (value, caseSensitive) {
             var caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.DoesNotContain);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
@@ -87,7 +86,7 @@
         },
         doesNotEndwith: function (value, caseSensitive) {
             caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.DoesNotEndwith);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
@@ -95,7 +94,7 @@
         },
         doesNotMatch: function (value, caseSensitive) {
             var caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.DoesNotMatch);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
@@ -103,38 +102,38 @@
         },
         doesNotStartwith: function (value, caseSensitive) {
             caseSensitive = (caseSensitive === undefined) ? false : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.DoesNotStartwith);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
             return out;
         },
         endswith: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Endswith);
             out.set('value', value);
             return out;
         },
         greaterThan: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.GreaterThan);
             out.set('value', value);
             return out;
         },
         greaterThanOrEqual: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.GreaterThanOrEqual);
             out.set('value', value);
             return out;
         },
         is: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Is);
             out.set('value', value);
             return out;
         },
         isNot: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.IsNot);
             out.set('value', value);
             return out;
@@ -146,36 +145,36 @@
             return this.get('value') === undefined;
         },
         in: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.IsIn);
             out.set('value', value.slice(0));
             return out;
         },
         notIn: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.IsNotIn);
             out.set('value', value.slice(0));
             return out;
         },
         lessThan: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.LessThan);
             out.set('value', value.slice(0));
             return out;
         },
         lessThanOrEqual: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.LessThanOrEqual);
             out.set('value', value);
             return out;
         },
         lower: function () {
-            var out = this.copy();
+            var out = this.clone();
             out.modify(this.Function.Lower);
         },
         matches: function (value, caseSensitive) {
             var caseSensitive = (caseSensitive === undefined) ? true : caseSensitive;
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Matches);
             out.set('value', value);
             out.set('caseSensitive', caseSensitive);
@@ -197,7 +196,7 @@
             }
         },
         startswith: function (value) {
-            var out = this.copy();
+            var out = this.clone();
             out.set('op', orb.Q.Op.Startswith);
             out.set('value', value);
             return out;
@@ -231,7 +230,7 @@
             return data;
         },
         upper: function () {
-            var out = this.copy();
+            var out = this.clone();
             out.modify(this.Funtions.Upper);
         }
     }, {
@@ -319,7 +318,7 @@
         },
         initialize: function (options) {
             options = options || {};
-            this.queries = new orb.Collection(options.queries);
+            this.queries = new Backbone.Collection(options.queries);
         },
         and: function (other) {
             if (other === undefined || other.isNull()) {
@@ -334,7 +333,7 @@
                 return new orb.QCompound({op: orb.Q.Op.And, queries: new Backbone.Collection([this, other])});
             }
         },
-        copy: function () {
+        clone: function () {
             var options = {
                 op: this.get('op'),
                 queries: this.queries.slice(0)

@@ -25,6 +25,24 @@
     };
     
     orb.Context = Backbone.Model.extend({
+        clone: function () {
+            var out = Backbone.Model.prototype.clone.call(this);
+
+            // ensure we do a deep copy
+            if (out.attributes.columns !== undefined) {
+                out.attributes.columns = out.attributes.columns.slice(0);
+            }
+
+            if (out.attributes.order !== undefined && typeof out.attributes.order === 'object') {
+                out.attributes.order = out.attributes.order.slice(0);
+            }
+
+            if (out.attributes.where !== undefined) {
+                out.attributes.where = out.attributes.where.clone();
+            }
+
+            return out;
+        },
         merge: function (other) {
             var self = this;
             _.each(other, function (value, key) {

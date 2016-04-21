@@ -6,7 +6,10 @@
             // initialize information from the schema
             if (!self._initialized) {
                 self._initialized = true;
+
                 self.references = {};
+                self.collections = {};
+
                 options = options || {};
 
                 // create the reference information
@@ -29,25 +32,20 @@
                                 // use default model
                                 if (model) {
                                     records = new model.collection();
+                                    records.source = self;
+                                    records.name = collector.name;
                                 } else {
                                     if (collector.model) {
                                         console.log('[ORB Error] Could not find model: ' + collector.model);
                                     }
 
                                     records = new Backbone.Collection();
+                                    records.url =function () {
+                                        return [s.trim(self.urlRoot, '/'), self.get('id'), collector.name].join('/');
+                                    };
                                 }
 
-                                records.url = function () {
-                                    var root = self.urlRoot;
-                                    var record_id = self.get('id');
-                                    if (!(root && record_id)) {
-                                        return undefined;
-                                    } else {
-                                        var trimmed = s.trim(self.urlRoot, '/');
-                                        return [trimmed, record_id, collector.name].join('/');
-                                    }
-                                };
-
+                                self.collections[collector.name] = records;
                                 self[collector.name] = records;
                             }
                         }
@@ -65,6 +63,7 @@
             if (schema) {
                 var collector = schema.collectors[attribute];
                 var column = undefined;
+                var record = undefined;
                 _.each(schema.columns, function (col) {
                     if (col.type === 'Reference' && col.name === attribute) {
                         column = col;
@@ -73,7 +72,7 @@
 
                 // get a reference column
                 if (column && column.type === 'Reference') {
-                    var record = this.references[attribute];
+                    record = this.references[attribute];
                     if (record === undefined) {
                         record = new schema.referenceScope[column.reference]({id: self.attributes[column.field]});
                         this.references[column.name] = record;
@@ -84,7 +83,7 @@
                 // get a collection of objects
                 else if (collector) {
                     if (collector.flags.Unique) {
-                        var record = this.references[attribute];
+                        record = this.references[attribute];
                         if (record === undefined) {
                             record = new schema.referenceScope[collector.model]();
                             record.urlRoot = this.url() + '/' + name;
@@ -92,7 +91,7 @@
                         }
                         return record;
                     } else {
-                        return this[attribute];
+                        return this.collections[attribute];
                     }
                 }
 
@@ -140,19 +139,11 @@
                             if (!self.references[collector.name]) {
                                 self.references[collector.name] = new schema.referenceScope[collector.model](data);
                             } else {
-                                self.references[collctor.name].update(data);
+                                self.references[collector.name].update(data);
                             }
                         } else {
-                            var records = undefined;
-                            if (data instanceof Array) {
-                                records = data;
-                            } else {
-                                records = data.records;
-                            }
-
-                            if (records !== undefined) {
-                                self[collector.name].set(records);
-                            }
+                            var collection = self.collections[collector.name];
+                            collection.set(collection.parse(data));
                         }
                     }
                 });
@@ -163,9 +154,10 @@
         },
         set: function (attributes, options) {
             var self = this;
+
             _.each(attributes, function (value, attribute) {
                 // set reference information
-                if (_.hasOwnProperty(self.references, attribute)) {
+                if (_.has(self.references, attribute)) {
                     delete attributes[attribute];
 
                     if (value instanceof orb.Model) {
@@ -177,12 +169,12 @@
                 }
 
                 // set collection information
-                else if (_.hasOwnProperty(self, attribute)) {
+                else if (_.has(self.collections, attribute)) {
                     delete attributes[attribute];
                     if (value instanceof orb.Collection) {
-                        self[attribute] = value;
+                        self.collections[attribute] = value;
                     } else {
-                        self[attribute].set(value);
+                        self.collections[attribute].set(value);
                     }
                 }
             });
@@ -193,27 +185,29 @@
             // unset a reference object
             if (this.references[name] !== undefined) {
                 options = options || {};
-                var data = this.references[name]
-                delete data;
+                var data = this.references[name];
+                delete this.references[name];
                 if (!options.silent) {
                     this.trigger('change:' + name, data);
                 }
+                return true;
             }
 
             // unset a collection
-            else if (this[attribute] !== undefined) {
-                this[attribute].reset();
+            else if (this.collections[attribute] !== undefined) {
+                this.collections[attribute].reset();
+                return true;
             }
 
             // unset an attribute
             else {
-                Backbone.Model.prototype.unset.call(this, attribute, options);
+                return Backbone.Model.prototype.unset.call(this, attribute, options);
             }
         },
         url: function () {
             if (this.collection) {
                 var id = this.get('id');
-                if (id !== undefined) {
+                if (id) {
                     return this.collection.url() + '/' + id;
                 } else {
                     return this.collection.url();

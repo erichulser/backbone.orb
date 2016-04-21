@@ -9,7 +9,11 @@
             timeout: 0
         },
         initialize: function () {
-            this.columns = new Backbone.Collection({model: orb.Column});
+            var Columns = Backbone.Collection.extend({
+                model: orb.Column
+            });
+
+            this.columns = new Columns();
         },
         toJSON: function () {
             return {
@@ -178,10 +182,16 @@
                 };
             });
 
-            return orb.Model.extend({
+            var modelType = orb.Model.extend({
                 urlRoot: schema.urlRoot,
                 defaults: defaults
             }, cls_methods);
+
+            modelType.collection = orb.Collection.extend({
+                model: modelType
+            });
+
+            return modelType;
         },
     });
 })(window.orb, jQuery);

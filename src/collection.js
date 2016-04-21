@@ -2,6 +2,10 @@
     orb.Collection = Backbone.Collection.extend({
         initialize: function (context) {
             context = context || {};
+
+            this.urlRoot = context.urlRoot || undefined;
+            this.name = context.name || undefined;
+            this.source = context.source || undefined;
             this.context = new orb.Context(context);
         },
         create: function (properties, options) {
@@ -9,28 +13,17 @@
             options.url = this.url();
             Backbone.Collection.prototype.create.call(this, properties, options);
         },
-        copy: function () {
-            var out = new this.constructor();
+        clone: function () {
+            var out = Backbone.Collection.prototype.clone.call(this);
+            out.context = this.context.clone();
+            out.name = this.name;
+            out.source = this.source;
             out.urlRoot = this.urlRoot;
-            out.model = this.model;
-            out.context = _.extend({}, this.context);
-
-            // create a copy of the where query
-            if (this.context.where !== undefined) {
-                out.context.where = this.context.where.copy();
-            }
-
-            if (this.context.columns !== undefined) {
-                out.context.columns = this.context.columns.slice(0);
-            }
-
-            if (this.context.order && typeof(this.context.order) === 'object') {
-                out.context.order = this.context.order.slice(0);
-            }
             return out;
         },
         fetchCount: function (options) {
-            var sub_select = this.copy();
+            options = options || {};
+            var sub_select = this.clone();
             if (options.data) {
                 options.data.returning = 'count';
             } else {
@@ -53,7 +46,7 @@
         },
         fetchOne: function (options) {
             options = options || {};
-            var new_collection = this.copy();
+            var new_collection = this.clone();
             var opts = _.extend({}, options, {
                 limit: 1,
                 success: function (collection, data) {
@@ -68,19 +61,57 @@
             });
             return new_collection.fetch(opts);
         },
+        parse: function (response, options) {
+            if (response instanceof Array) {
+                return response;
+            } else if (response.records !== undefined) {
+                return response.records;
+            } else {
+                var records = [];
+                if (response.count) {
+                    for (var i=0; i < response.count; i++) {
+                        records.push(undefined);
+                    }
+
+                    if (response.first !== undefined) {
+                        records[0] = new this.constructor.model(response.first);
+                    }
+                    if (response.last !== undefined) {
+                        records[records.length - 1] = new this.constructor.model(response.last);
+                    }
+                } else {
+                    if (response.first !== undefined) {
+                        records.push(new this.constructor.model(response.first));
+                    }
+                    if (response.last !== undefined) {
+                        records.push(new this.constructor.model(response.last));
+                    }
+                }
+
+                return records;
+            }
+        },
         refine: function (context) {
-            var out = this.copy();
+            var out = this.clone();
             out.context.merge(this.context.attributes);
             out.context.merge(context);
             return out;
         },
         url: function () {
-            var url = (typeof(this.urlRoot) === 'string') ? this.urlRoot : this.urlRoot();
-            if (this.context.get('view')) {
-                return s.rtrim(url, '/') + '/' + this.context.get('view');
-            } else {
-                return url;
+            if (this.source && this.name) {
+                var root = this.source.urlRoot;
+
+                if (root) {
+                    var record_id = this.source.get('id');
+                    if (record_id) {
+                        var trimmed = s.trim(root, '/')
+                        return [trimmed, record_id, this.name].join('/');
+                    } else {
+                        return root;
+                    }
+                }
             }
+            return this.urlRoot;
         }
     });
 })(window.orb, jQuery);

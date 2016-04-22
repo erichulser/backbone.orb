@@ -23,16 +23,6 @@
             out.urlRoot = this.urlRoot;
             return out;
         },
-        fetchCount: function (options) {
-            options = options || {};
-            var sub_select = this.clone();
-            if (options.data !== undefined) {
-                options.data.returning = 'count';
-            } else {
-                options.data = {returning: 'count'};
-            }
-            return sub_select.fetch(options);
-        },
         fetch: function (options) {
             options = options || {};
             var context = new orb.Context(_.clone(this.context.attributes));
@@ -46,22 +36,51 @@
             // call the base collection context commands
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
-        fetchOne: function (options) {
+        fetchCount: function (options) {
             options = options || {};
-            var new_collection = this.clone();
-            var opts = _.extend({}, options, {
-                limit: 1,
-                success: function (collection, data) {
+
+            var self = this;
+            var context = new orb.Context(_.extend({}, _.clone(this.context.attributes), {
+                returning: 'count'
+            }));
+            context.merge(options);
+
+            var params = _.extend({}, options, {
+                method: 'get',
+                url: this.url(),
+                data: _.extend({}, options.data, {context: JSON.stringify(context.toJSON())}),
+                success: function (response) {
                     if (options.success) {
-                        if (collection.length) {
-                            options.success(collection.at(0), data);
-                        } else {
-                            options.success(undefined, data);
-                        }
+                        options.success(self, response.count);
                     }
                 }
             });
-            return new_collection.fetch(opts);
+            return $.ajax(params);
+        },
+        fetchOne: function (options) {
+            options = options || {};
+            var self = this;
+
+            var context = new orb.Context(_.extend({}, _.clone(this.context.attributes), {
+                limit: 1
+            }));
+            context.merge(options);
+
+            var params = _.extend({}, options, {
+                method: 'get',
+                limit: 1,
+                url: this.url(),
+                data: _.extend({}, options.data, {context: JSON.stringify(context.toJSON())}),
+                success: function (response) {
+                    if (options.success) {
+                        var attributes = (response.length) ? response[0] : {};
+                        var model = self.model || Bakcbone.Model;
+                        options.success(new model(attributes), attributes);
+                    }
+                }
+            });
+
+            return $.ajax(params);
         },
         parse: function (response, options) {
             if (response instanceof Array || response instanceof Backbone.Collection || response instanceof Backbone.Model) {

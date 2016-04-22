@@ -318,7 +318,8 @@
         },
         initialize: function (options) {
             options = options || {};
-            this.queries = new Backbone.Collection(options.queries);
+            var sub_q = options.queries;
+            this.queries = (sub_q instanceof Backbone.Collection) ? sub_q : new Backbone.Collection(sub_q);
         },
         and: function (other) {
             if (other === undefined || other.isNull()) {
@@ -336,7 +337,7 @@
         clone: function () {
             var options = {
                 op: this.get('op'),
-                queries: this.queries.slice(0)
+                queries: this.queries.clone()
             };
             return new orb.QCompound(options);
         },

@@ -7,6 +7,8 @@
             this.name = context.name || undefined;
             this.source = context.source || undefined;
             this.context = new orb.Context(context);
+
+            Backbone.Collection.prototype.initialize.call(this, context);
         },
         create: function (properties, options) {
             options = options || {};
@@ -24,7 +26,7 @@
         fetchCount: function (options) {
             options = options || {};
             var sub_select = this.clone();
-            if (options.data) {
+            if (options.data !== undefined) {
                 options.data.returning = 'count';
             } else {
                 options.data = {returning: 'count'};
@@ -62,16 +64,19 @@
             return new_collection.fetch(opts);
         },
         parse: function (response, options) {
-            if (response instanceof Array) {
+            if (response instanceof Array || response instanceof Backbone.Collection || response instanceof Backbone.Model) {
                 return response;
             } else if (response.records !== undefined) {
                 return response.records;
             } else {
                 var records = [];
-                if (response.count) {
-                    for (var i=0; i < response.count; i++) {
-                        records.push(undefined);
-                    }
+
+                if (response.count || response.ids) {
+                    var use_undefined = response.ids === undefined;
+                    var count = response.count || response.ids.length;
+                    records = _.times(count, function (n) {
+                        return (use_undefined) ? undefined : {id: response.ids[n]}
+                    });
 
                     if (response.first !== undefined) {
                         records[0] = new this.constructor.model(response.first);
@@ -104,7 +109,7 @@
                 if (root) {
                     var record_id = this.source.get('id');
                     if (record_id) {
-                        var trimmed = s.trim(root, '/')
+                        var trimmed = s.trim(root, '/');
                         return [trimmed, record_id, this.name].join('/');
                     } else {
                         return root;

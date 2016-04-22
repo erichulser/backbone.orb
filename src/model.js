@@ -2,6 +2,7 @@
     orb.Model = Backbone.Model.extend({
         initialize: function (options) {
             var self = this;
+            var schema = self.constructor.schema;
 
             // initialize information from the schema
             if (!self._initialized) {
@@ -13,7 +14,6 @@
                 options = options || {};
 
                 // create the reference information
-                var schema = self.constructor.schema;
                 if (schema) {
                     _.each(schema.columns, function (column) {
                         if (column.type === 'Reference') {
@@ -40,7 +40,7 @@
                                     }
 
                                     records = new Backbone.Collection();
-                                    records.url =function () {
+                                    records.url = function () {
                                         return [s.trim(self.urlRoot, '/'), self.get('id'), collector.name].join('/');
                                     };
                                 }
@@ -52,12 +52,60 @@
                     });
                 }
             }
+            
+            // update any reference or collector attributes here
+            if (schema) {
+                _.each(self.attributes, function (attribute, key) {
+                    if (_.has(self.references, key)) {
+                        delete self.attributes[key];
+                        if (self.references[key] === undefined) {
+                            var model = undefined;
+                            _.each(schema.columns, function (column) {
+                                if (column.name === key) {
+                                    model = schema.referenceScope[column.reference];
+                                }
+                            });
+
+                            if (model === undefined) {
+                                console.log('[ORB Error] Could not find model for: ' + schema.model + '.' + key);
+                                model = Backbone.Model;
+                            }
+
+                            self.references[key] = new model(attribute);
+                        } else {
+                            self.references[key].set(attribute);
+                        }
+                    } else if (_.has(self.collections, key)) {
+                        delete self.attributes[key];
+                        if (attribute instanceof Backbone.Collection) {
+                            self.collections[key] = attribute;
+                        } else {
+                            var collection = self.collections[key];
+                            collection.set(collection.parse(attribute));
+                        }
+                    }
+                });
+            }
 
 
             // call the base class's method
             Backbone.Model.prototype.initialize.call(this, options);
         },
+        fetch: function (options) {
+            options = options || {};
+            var context = new orb.Context();
+            context.merge(options);
+
+            // if we have context specific options, update the root query
+            if (!_.isEmpty(context)) {
+                options.data = _.extend({}, options.data, {context: JSON.stringify(context.toJSON())});
+            }
+
+            Backbone.Model.prototype.fetch.call(this, options);
+        },
         get: function (attribute) {
+            var parts = attribute.split('.');
+            attribute = parts[0];
             var self = this;
             var schema = this.constructor.schema;
             if (schema) {
@@ -77,7 +125,12 @@
                         record = new schema.referenceScope[column.reference]({id: self.attributes[column.field]});
                         this.references[column.name] = record;
                     }
-                    return record;
+
+                    if (parts.length > 1) {
+                        return record.get(parts.slice(1).join('.'));
+                    } else {
+                        return record;
+                    }
                 }
 
                 // get a collection of objects
@@ -124,7 +177,7 @@
                             if (!self.references[column.name]) {
                                 self.references[column.name] = new schema.referenceScope[column.reference](data);
                             } else {
-                                self.references[column.name].update(data);
+                                self.references[column.name].set(data);
                             }
                         }
                     }
@@ -139,7 +192,7 @@
                             if (!self.references[collector.name]) {
                                 self.references[collector.name] = new schema.referenceScope[collector.model](data);
                             } else {
-                                self.references[collector.name].update(data);
+                                self.references[collector.name].set(data);
                             }
                         } else {
                             var collection = self.collections[collector.name];
@@ -153,33 +206,53 @@
             return Backbone.Model.prototype.parse.call(this, response, options);
         },
         set: function (attributes, options) {
-            var self = this;
+            if (options && typeof attributes === 'string') {
+                var new_attrib = {};
+                new_attrib[attributes] = options;
+                attributes = new_attrib;
+            }
 
+            var self = this;
+            var schema = this.constructor.schema;
             _.each(attributes, function (value, attribute) {
                 // set reference information
                 if (_.has(self.references, attribute)) {
+                    var field = undefined;
+                    _.each(schema.columns, function (col) {
+                        if (col.name === attribute) {
+                            field = col.field;
+                        }
+                    });
+
                     delete attributes[attribute];
 
-                    if (value instanceof orb.Model) {
+                    if (value instanceof Backbone.Model) {
                         self.references[attribute] = value;
+                        if (field) {
+                            attributes[field] = value.id;
+                        }
                     } else {
                         var ref = self.get(attribute);
-                        ref.update(value);
+                        ref.set(value);
+                        if (field) {
+                            attributes[field] = ref.id;
+                        }
                     }
                 }
 
                 // set collection information
                 else if (_.has(self.collections, attribute)) {
                     delete attributes[attribute];
-                    if (value instanceof orb.Collection) {
+                    if (value instanceof Backbone.Collection) {
                         self.collections[attribute] = value;
                     } else {
-                        self.collections[attribute].set(value);
+                        var collection = self.collections[attribute];
+                        collection.set(collection.parse(value));
                     }
                 }
             });
 
-            return Backbone.Model.prototype.set.call(this, attributes, options);
+            return Backbone.Model.prototype.set.call(this, attributes);
         },
         unset: function (attribute, options) {
             // unset a reference object

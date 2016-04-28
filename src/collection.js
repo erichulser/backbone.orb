@@ -30,7 +30,7 @@
 
             // if we have context specific options, update the root query
             if (!_.isEmpty(context)) {
-                options.data = _.extend({}, options.data, {context: JSON.stringify(context.toJSON())});
+                options.data = _.extend({}, options.data, {orb_context: JSON.stringify(context.toJSON())});
             }
 
             // call the base collection context commands
@@ -48,7 +48,7 @@
             var params = _.extend({}, options, {
                 method: 'get',
                 url: this.url(),
-                data: _.extend({}, options.data, {context: JSON.stringify(context.toJSON())}),
+                data: _.extend({}, options.data, {orb_context: JSON.stringify(context.toJSON())}),
                 success: function (response) {
                     if (options.success) {
                         options.success(self, response.count);
@@ -70,7 +70,7 @@
                 method: 'get',
                 limit: 1,
                 url: this.url(),
-                data: _.extend({}, options.data, {context: JSON.stringify(context.toJSON())}),
+                data: _.extend({}, options.data, {orb_context: JSON.stringify(context.toJSON())}),
                 success: function (response) {
                     if (options.success) {
                         var attributes = (response.length) ? response[0] : {};
@@ -89,6 +89,7 @@
                 return response.records;
             } else {
                 var records = [];
+                var model_type = this.constructor.model || Backbone.Model;
 
                 if (response.count || response.ids) {
                     var use_undefined = response.ids === undefined;
@@ -98,17 +99,17 @@
                     });
 
                     if (response.first !== undefined) {
-                        records[0] = new this.constructor.model(response.first);
+                        records[0] = new model_type(response.first);
                     }
                     if (response.last !== undefined) {
-                        records[records.length - 1] = new this.constructor.model(response.last);
+                        records[records.length - 1] = new model_type(response.last);
                     }
                 } else {
                     if (response.first !== undefined) {
-                        records.push(new this.constructor.model(response.first));
+                        records.push(new model_type(response.first));
                     }
                     if (response.last !== undefined) {
-                        records.push(new this.constructor.model(response.last));
+                        records.push(new model_type(response.last));
                     }
                 }
 
@@ -120,6 +121,24 @@
             out.context.merge(this.context.attributes);
             out.context.merge(context);
             return out;
+        },
+        save: function (options) {
+            var url = this.url();
+            var records = this.toJSON();
+            var self = this;
+            options = options || {};
+
+            return $.ajax(_.extend({}, options, {
+                type: 'put',
+                url: url,
+                data: JSON.stringify({records: records}),
+                success: function (results) {
+                    self.set(results);
+                    if (options.success) {
+                        options.success(self, results);
+                    }
+                }
+            }));
         },
         url: function () {
             if (this.source && this.name) {

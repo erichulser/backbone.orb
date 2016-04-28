@@ -98,7 +98,7 @@
 
             // if we have context specific options, update the root query
             if (!_.isEmpty(context)) {
-                options.data = _.extend({}, options.data, {context: JSON.stringify(context.toJSON())});
+                options.data = _.extend({}, options.data, {orb_context: JSON.stringify(context.toJSON())});
             }
 
             Backbone.Model.prototype.fetch.call(this, options);
@@ -122,11 +122,14 @@
                 if (column && column.type === 'Reference') {
                     record = this.references[attribute];
                     if (record === undefined) {
-                        record = new schema.referenceScope[column.reference]({id: self.attributes[column.field]});
-                        this.references[column.name] = record;
+                        var record_id = self.attributes[column.field];
+                        if (record_id) {
+                            record = new schema.referenceScope[column.reference]({id: self.attributes[column.field]});
+                            this.references[column.name] = record;
+                        }
                     }
 
-                    if (parts.length > 1) {
+                    if (parts.length > 1 && record !== undefined) {
                         return record.get(parts.slice(1).join('.'));
                     } else {
                         return record;
@@ -205,6 +208,44 @@
             // process the base call
             return Backbone.Model.prototype.parse.call(this, response, options);
         },
+        save: function (attrs, options) {
+            options = options || {};
+            var my_attrs =  _.clone(attrs || this.attributes);
+            var include = options.include || '';
+            var self = this;
+            var expand = [];
+
+            // include any collector information here
+            _.each(include.split(','), function (name) {
+                var collection = self.collections[name];
+                if (collection !== undefined) {
+                    my_attrs[name] = collection.toJSON();
+                    expand.push(name);
+                }
+            });
+
+            // ignore any read-only attributes
+            var schema = self.constructor.schema;
+            var is_new = self.isNew();
+            if (schema !== undefined) {
+                _.each(schema.columns, function (column) {
+                    if (column.flags.ReadOnly) {
+                        delete my_attrs[column.field];
+                        delete my_attrs[column.name];
+                    } else if (is_new && my_attrs[column.field] === null) {
+                        delete my_attrs[column.field];
+                        delete my_attrs[column.name];
+                    }
+                });
+            }
+
+            if (expand.length) {
+                my_attrs.orb_context = {expand: expand.join(',')};
+            }
+            options.data = JSON.stringify(my_attrs);
+
+            return Backbone.Model.prototype.save.call(this, attrs, options);
+        },
         set: function (attributes, options) {
             if (options && typeof attributes === 'string') {
                 var new_attrib = {};
@@ -232,10 +273,9 @@
                             attributes[field] = value.id;
                         }
                     } else {
-                        var ref = self.get(attribute);
-                        ref.set(value);
+                        delete self.references[attribute];
                         if (field) {
-                            attributes[field] = ref.id;
+                            attributes[field] = value;
                         }
                     }
                 }

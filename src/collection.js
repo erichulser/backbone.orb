@@ -133,7 +133,11 @@
                 url: url,
                 data: JSON.stringify({records: records}),
                 success: function (results) {
-                    self.set(results);
+                    // update the result records
+                    self.each(function (model, i) {
+                        model.set(model.parse(results[i]));
+                    });
+
                     if (options.success) {
                         options.success(self, results);
                     }

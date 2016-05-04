@@ -92,7 +92,8 @@
             dbname: '',
             display: '',
             inherits: '',
-            type: ''
+            type: '',
+            idColumn: 'id'
         },
         initialize: function () {
             this.columns = new Backbone.Collection();
@@ -183,6 +184,7 @@
             });
 
             var modelType = orb.Model.extend({
+                idAttribute: schema.idColumn,
                 urlRoot: schema.urlRoot,
                 defaults: defaults
             }, cls_methods);

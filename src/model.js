@@ -247,7 +247,7 @@
             return Backbone.Model.prototype.save.call(this, attrs, options);
         },
         set: function (attributes, options) {
-            if (options && typeof attributes === 'string') {
+            if (options !== undefined && typeof attributes === 'string') {
                 var new_attrib = {};
                 new_attrib[attributes] = options;
                 attributes = new_attrib;

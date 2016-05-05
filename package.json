@@ -2,9 +2,9 @@
   "name": "orb.js",
   "description": "Backbone layer for the ORB database framework",
   "homepage": "https://github.com/orb-framework/orb.js",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "src/all.js",
-  "license": "LGPL",
+  "license": "MIT",
   "author": {
     "name": "Eric Hulser",
     "email": "eric.hulser@projexsoftware.com"

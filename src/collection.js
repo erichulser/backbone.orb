@@ -122,6 +122,31 @@
             out.context.merge(context);
             return out;
         },
+        toJSON: function () {
+            var self = this;
+            var records = [];
+
+            self.each(function (record) {
+                // ignore any read-only attributes
+                var attrs = _.clone(record.attributes);
+                var schema = record.constructor.schema;
+                var is_new = record.isNew();
+                if (schema !== undefined) {
+                    _.each(schema.columns, function (column) {
+                        if (column.flags.ReadOnly) {
+                            delete attrs[column.field];
+                            delete attrs[column.name];
+                        } else if (is_new && attrs[column.field] === null) {
+                            delete attrs[column.field];
+                            delete attrs[column.name];
+                        }
+                    });
+                }
+                records.push(attrs);
+            });
+
+            return records;
+        },
         save: function (options) {
             var url = this.url();
             var records = this.toJSON();

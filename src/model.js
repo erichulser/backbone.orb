@@ -3,6 +3,7 @@
         initialize: function (options) {
             var self = this;
             var schema = self.constructor.schema;
+            self.baseAttributes = _.clone(self.defaults);
 
             // initialize information from the schema
             if (!self._initialized) {
@@ -162,6 +163,20 @@
                 return Backbone.Model.prototype.get.call(this, attribute);
             }
         },
+        modifiedAttributes: function () {
+            var output = {};
+            var self = this;
+            var schema = this.constructor.schema;
+
+            _.each(this.attributes, function (value, attr) {
+                if (!_.isEqual(value, self.baseAttributes[attr])) {
+                    if (!(schema && schema.columns[attr] && schema.columns[attr].flags.ReadOnly)) {
+                        output[attr] = value;
+                    }
+                }
+            });
+            return output;
+        },
         parse: function (response, options) {
             if (this.references === undefined) {
                 this.initialize();
@@ -205,8 +220,17 @@
                 });
             }
 
+            // update the base attributes with the newly parsed ones
+            _.extend(this.baseAttributes, response);
+
             // process the base call
             return Backbone.Model.prototype.parse.call(this, response, options);
+        },
+        reset: function () {
+            var self = this;
+            _.each(self.baseAttributes, function (value, attr) {
+                self.set(attr, value);
+            });
         },
         save: function (attrs, options) {
             options = options || {};

@@ -177,23 +177,11 @@ require('./queries');
             var records = [];
 
             self.each(function (record) {
-                records.push(record.modifiedAttributes());
-                // // ignore any read-only attributes
-                // var attrs = _.clone(record.attributes);
-                // var schema = record.constructor.schema;
-                // var is_new = record.isNew();
-                // if (schema !== undefined) {
-                //     _.each(schema.columns, function (column) {
-                //         if (column.flags.ReadOnly) {
-                //             delete attrs[column.field];
-                //             delete attrs[column.name];
-                //         } else if (is_new && attrs[column.field] === null) {
-                //             delete attrs[column.field];
-                //             delete attrs[column.name];
-                //         }
-                //     });
-                // }
-                // records.push(attrs);
+                var attrs = record.modifiedAttributes();
+                if (!record.isNew()) {
+                    attrs[record.idAttribute] = record.id;
+                }
+                records.push(attrs);
             });
 
             return records;
@@ -518,6 +506,7 @@ require('./queries');
                     }
                 }
             });
+
             return output;
         },
         parse: function (response, options) {

@@ -129,9 +129,9 @@
             self.each(function (record) {
                 var attrs = record.modifiedAttributes();
                 if (!record.isNew()) {
-                    attrs[record.idColumn] = record.id;
+                    attrs[record.idAttribute] = record.id;
                 }
-                records.push(record.modifiedAttributes());
+                records.push(attrs);
             });
 
             return records;

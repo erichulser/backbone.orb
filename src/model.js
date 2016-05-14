@@ -53,7 +53,7 @@
                     });
                 }
             }
-            
+
             // update any reference or collector attributes here
             if (schema) {
                 _.each(self.attributes, function (attribute, key) {
@@ -72,7 +72,11 @@
                                 model = Backbone.Model;
                             }
 
-                            self.references[key] = new model(attribute);
+                            if (attribute instanceof model) {
+                                self.references[key] = attribute;
+                            } else {
+                                self.references[key] = new model(attribute);
+                            }
                         } else {
                             self.references[key].set(attribute);
                         }

@@ -384,7 +384,7 @@ require('./queries');
                     });
                 }
             }
-            
+
             // update any reference or collector attributes here
             if (schema) {
                 _.each(self.attributes, function (attribute, key) {
@@ -403,7 +403,11 @@ require('./queries');
                                 model = Backbone.Model;
                             }
 
-                            self.references[key] = new model(attribute);
+                            if (attribute instanceof model) {
+                                self.references[key] = attribute;
+                            } else {
+                                self.references[key] = new model(attribute);
+                            }
                         } else {
                             self.references[key].set(attribute);
                         }
@@ -615,9 +619,11 @@ require('./queries');
                 // set reference information
                 if (_.has(self.references, attribute)) {
                     var field = undefined;
+                    var model = undefined;
                     _.each(schema.columns, function (col) {
                         if (col.name === attribute) {
                             field = col.field;
+                            model = schema.referenceScope[col.reference];
                         }
                     });
 
@@ -625,9 +631,11 @@ require('./queries');
 
                     if (value instanceof Object ) {
                         if(value instanceof Backbone.Model){
-                          self.references[attribute] = value;
-                        }else{
-                          self.references[attribute].set(value);
+                            self.references[attribute] = value;
+                        } else if(self.references[attribute]) {
+                            self.references[attribute].set(value);
+                        } else if (model) {
+                            self.references[attribute] = new model(value);
                         }
                         if (field && value.id) {
                             attributes[field] = value.id;

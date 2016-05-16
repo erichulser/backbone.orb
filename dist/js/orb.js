@@ -623,9 +623,13 @@ require('./queries');
 
                     delete attributes[attribute];
 
-                    if (value instanceof Backbone.Model) {
-                        self.references[attribute] = value;
-                        if (field) {
+                    if (value instanceof Object ) {
+                        if(value instanceof Backbone.Model){
+                          self.references[attribute] = value;
+                        }else{
+                          self.references[attribute].set(value);
+                        }
+                        if (field && value.id) {
                             attributes[field] = value.id;
                         }
                     } else {

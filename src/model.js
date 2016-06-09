@@ -288,17 +288,25 @@
                 // set reference information
                 if (_.has(self.references, attribute)) {
                     var field = undefined;
+                    var model = undefined;
                     _.each(schema.columns, function (col) {
                         if (col.name === attribute) {
                             field = col.field;
+                            model = schema.referenceScope[col.reference];
                         }
                     });
 
                     delete attributes[attribute];
 
-                    if (value instanceof Backbone.Model) {
-                        self.references[attribute] = value;
-                        if (field) {
+                    if (value instanceof Object ) {
+                        if(value instanceof Backbone.Model){
+                            self.references[attribute] = value;
+                        } else if(self.references[attribute]) {
+                            self.references[attribute].set(value);
+                        } else if (model) {
+                            self.references[attribute] = new model(value);
+                        }
+                        if (field && value.id) {
                             attributes[field] = value.id;
                         }
                     } else {

@@ -241,8 +241,8 @@
             options = options || {};
             var my_attrs =  _.clone(attrs || this.attributes);
             var include = options.include || '';
+            var expand = options.expand ? [options.expand] : [];
             var self = this;
-            var expand = [];
 
             // include any collector information here
             _.each(include.split(','), function (name) {

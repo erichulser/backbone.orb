@@ -244,9 +244,13 @@
             var expand = options.expand ? [options.expand] : [];
             var self = this;
 
+            // TODO: What is this and why ? If include is not an array only then split it.
+            if(!Array.isArray(include)){
+                include = include.split(',')
+            }
 
             // include any collector information here
-            _.each(include.split(','), function (name) {
+            _.each(include, function (name) {
                 var collection = self.collections[name];
                 if (collection !== undefined) {
                     my_attrs[name] = collection.toJSON();

@@ -244,6 +244,7 @@
             var expand = options.expand ? [options.expand] : [];
             var self = this;
 
+
             // include any collector information here
             _.each(include.split(','), function (name) {
                 var collection = self.collections[name];
@@ -271,7 +272,7 @@
             if (expand.length) {
                 my_attrs.orb_context = {expand: expand.join(',')};
             }
-            options.data = JSON.stringify(my_attrs);
+            options.attrs = my_attrs;
 
             return Backbone.Model.prototype.save.call(this, attrs, options);
         },

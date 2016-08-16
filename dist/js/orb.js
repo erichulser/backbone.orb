@@ -196,6 +196,7 @@ require('./queries');
                 type: 'put',
                 url: url,
                 data: JSON.stringify({records: records}),
+                contentType: 'application/json',
                 success: function (results) {
                     // update the result records
                     self.each(function (model, i) {
@@ -578,7 +579,7 @@ require('./queries');
 
             // TODO: What is this and why ? If include is not an array only then split it.
             if(!Array.isArray(include)){
-                include = include.split(',');
+                include = include.split(',')
             }
 
             // include any collector information here

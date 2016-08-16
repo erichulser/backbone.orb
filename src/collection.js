@@ -146,6 +146,7 @@
                 type: 'put',
                 url: url,
                 data: JSON.stringify({records: records}),
+                contentType: 'application/json',
                 success: function (results) {
                     // update the result records
                     self.each(function (model, i) {

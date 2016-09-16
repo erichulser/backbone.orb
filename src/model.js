@@ -3,6 +3,8 @@
         initialize: function (options) {
             var self = this;
             var schema = self.constructor.schema;
+
+            // define the base attributes of this model
             self.baseAttributes = _.clone(self.defaults);
 
             // initialize information from the schema
@@ -57,6 +59,10 @@
             // update any reference or collector attributes here
             if (schema) {
                 _.each(self.attributes, function (attribute, key) {
+                    if (!self.isNew() && _.has(options, key)) {
+                        self.baseAttributes[key] = options[key];
+                    }
+
                     if (_.has(self.references, key)) {
                         delete self.attributes[key];
                         if (self.references[key] === undefined) {

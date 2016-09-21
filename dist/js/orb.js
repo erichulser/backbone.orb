@@ -714,7 +714,8 @@ require('./queries');
         schema: undefined,
         collection: orb.Collection,
         all: function (options) {
-            return this.select(options);
+            var all_options = _.extend({limit: null}, options);
+            return this.select(all_options);
         },
         select: function (context) {
             var records = new this.collection(context);

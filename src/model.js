@@ -22,6 +22,11 @@
                         if (column.type === 'Reference') {
                             self.references[column.name] = undefined;
                         }
+
+                        // update the base attribute
+                        if (!self.isNew() && _.has(options, column.field)) {
+                            self.baseAttributes[column.name] = options[column.name];
+                        }
                     });
 
                     _.each(schema.collectors, function (collector) {
@@ -210,6 +215,11 @@
                             }
                         }
                     }
+
+                    // update the base attributes with the newly parsed ones
+                    if (_.has(response, column.field)) {
+                        self.baseAttributes[column.field] = response[column.field];
+                    }
                 });
 
                 // load collectors
@@ -230,9 +240,6 @@
                     }
                 });
             }
-
-            // update the base attributes with the newly parsed ones
-            _.extend(this.baseAttributes, response);
 
             // process the base call
             return Backbone.Model.prototype.parse.call(this, response, options);

@@ -452,6 +452,11 @@ require('./queries');
 
             Backbone.Model.prototype.fetch.call(this, options);
         },
+        clone: function () {
+            var copy = Backbone.Model.prototype.clone.call(this);
+            copy.baseAttributes = _.clone(this.baseAttributes);
+            return copy;
+        },
         get: function (attribute) {
             var parts = attribute.split('.');
             attribute = parts[0];

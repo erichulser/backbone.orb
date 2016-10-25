@@ -29,6 +29,7 @@ window.orb = {
         resp.success(function (schemas) {
             _.each(schemas, function (schema) {
                 // create the model
+                schema.urlRoot = api_root.rstrip('/') + '/' + schema.dbname;
                 scope[schema.model] = orb.Schema.generateModel({schema: schema, scope: scope});
             });
 

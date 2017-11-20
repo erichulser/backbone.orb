@@ -1259,9 +1259,7 @@ require('./queries');
 
             // create the default values
             _.each(schema.columns, function (column, field) {
-                if (column.type !== 'Id') {
-                    defaults[field] = column['default'];
-                }
+                  defaults[field] = column['default'];
             });
 
             // load collectors
@@ -1320,4 +1318,5 @@ require('./queries');
         },
     });
 })(window.orb, jQuery);
+
 },{}]},{},[1]);
